@@ -31,7 +31,8 @@ def main() -> None:
         subprocess.run([str(python), *arguments], cwd=root, check=True)
 
     run("-m", "pip", "install", "--upgrade", "pip")
-    torch_command = ["-m", "pip", "install", "--upgrade", "torch", "torchvision"]
+    # Replacing the build is essential when a newer CPU release is already installed.
+    torch_command = ["-m", "pip", "install", "--upgrade", "--force-reinstall", "torch", "torchvision"]
     if sys.platform != "darwin":
         build = args.cuda_build if args.compute == "cuda" else "cpu"
         torch_command += ["--index-url", f"https://download.pytorch.org/whl/{build}"]

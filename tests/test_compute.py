@@ -1,4 +1,6 @@
 import sys
+import importlib.util
+from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -54,6 +56,21 @@ class ComputeTests(unittest.TestCase):
                 enabled_rules={"wrong_way": True}, device="cpu",
             )
         self.assertEqual(config["yolo"]["device"], "cpu")
+
+    def test_cuda_installer_replaces_an_existing_cpu_build(self):
+        path = Path(__file__).resolve().parents[1] / "tools" / "setup.py"
+        spec = importlib.util.spec_from_file_location("capstone_setup", path)
+        setup = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(setup)
+        with patch.object(sys, "argv", [str(path), "--compute", "cuda"]), \
+                patch.object(sys, "platform", "win32"), \
+                patch.object(setup.os, "chdir"), \
+                patch.object(setup.venv, "EnvBuilder"), \
+                patch.object(setup.subprocess, "run") as run:
+            setup.main()
+        torch_command = next(call.args[0] for call in run.call_args_list if "torchvision" in call.args[0])
+        self.assertIn("--force-reinstall", torch_command)
+        self.assertIn("https://download.pytorch.org/whl/cu126", torch_command)
 
 
 if __name__ == "__main__":
