@@ -21,7 +21,14 @@ class RuleTrigger:
     previous_track_id: int | None = None
 
 
-class _ContinuousObservationRule:
+class _RuleDiagnostics:
+    def _record_decision(self, track_id: int, checks: dict, **values) -> None:
+        decisions = getattr(self, "diagnostic_decisions", None)
+        if decisions is not None:
+            decisions[track_id] = {"checks": checks, "values": values}
+
+
+class _ContinuousObservationRule(_RuleDiagnostics):
     """Do not infer a boundary crossing through missing or unowned observations."""
 
     _continuity_maps: tuple[str, ...] = ()
@@ -94,7 +101,13 @@ class RegionEntryRule(_ContinuousObservationRule):
         direction_matches = self.controlled_direction is None or (
             alignment is not None and alignment >= self.min_direction_alignment
         )
-        if (entered or persistent_initial_presence) and signal_is_red and direction_matches and age >= self.min_track_age_frames and track_id not in self._fired:
+        checks = {"entry_observed": entered or persistent_initial_presence, "signal_red": signal_is_red,
+                  "direction_matches": direction_matches, "track_mature": age >= self.min_track_age_frames,
+                  "not_already_fired": track_id not in self._fired}
+        self._record_decision(track_id, checks, inside=inside, previous_inside=previous,
+                              initial_presence_enabled=self.trigger_on_initial_presence,
+                              age=age, minimum_age=self.min_track_age_frames, direction_alignment=alignment)
+        if all(checks.values()):
             self._fired.add(track_id)
             return RuleTrigger(track, self.event_type, self.region_name, alignment or 0.0, signal_is_red,
                                observations_used=age)
@@ -189,6 +202,11 @@ class DirectedStopLineRule(_ContinuousObservationRule):
         if point_in_polygon(current, self.approach_polygon):
             self._seen_approach.add(track_id)
         if previous is None or track_id in self._fired:
+            self._record_decision(track_id, {
+                "previous_observation": previous is not None, "not_already_fired": track_id not in self._fired,
+                "approach_observed": track_id in self._seen_approach, "track_mature": age >= self.min_track_age_frames,
+                "signal_red": signal_is_red, "previous_signal_red": previous_red,
+            }, age=age, minimum_age=self.min_track_age_frames)
             return None
 
         previous_side = _side(previous, *self.stop_line)
@@ -200,14 +218,17 @@ class DirectedStopLineRule(_ContinuousObservationRule):
         )
         alignment = self._direction_alignment(track_id)
         direction_matches = alignment is not None and alignment >= self.min_direction_alignment
-        if (
-            crossed_towards_intersection
-            and track_id in self._seen_approach
-            and direction_matches
-            and signal_is_red
-            and previous_red
-            and age >= self.min_track_age_frames
-        ):
+        checks = {"crossed_finite_stop_line": crossed_towards_intersection,
+                  "approach_observed": track_id in self._seen_approach, "direction_matches": direction_matches,
+                  "signal_red": signal_is_red, "previous_signal_red": previous_red,
+                  "track_mature": age >= self.min_track_age_frames, "previous_observation": True,
+                  "not_already_fired": track_id not in self._fired}
+        history = self._history[track_id]
+        self._record_decision(track_id, checks, age=age, minimum_age=self.min_track_age_frames,
+                              direction_alignment=alignment, minimum_alignment=self.min_direction_alignment,
+                              history_motion_pixels=hypot(history[-1][0]-history[0][0], history[-1][1]-history[0][1]),
+                              minimum_motion_pixels=self.min_motion_pixels)
+        if all(checks.values()):
             self._fired.add(track_id)
             return RuleTrigger(track, self.event_type, self.region_name, alignment, signal_is_red,
                                observations_used=len(self._history[track_id]))
@@ -229,7 +250,7 @@ class DirectedStopLineRule(_ContinuousObservationRule):
 
 
 
-class WrongWayRule:
+class WrongWayRule(_RuleDiagnostics):
     """Trigger once for stable, predominantly opposite motion inside one selected carriageway."""
 
     def __init__(
@@ -286,6 +307,7 @@ class WrongWayRule:
             self._history[track_id].clear()
             self._height_history[track_id].clear()
             self._wrong_count[track_id] = 0
+            self._record_decision(track_id, {"wheel_points_inside_lane": False})
             return None
         self._try_stitch(track)
         self._inside_age[track_id] = self._inside_age.get(track_id, 0) + 1
@@ -301,11 +323,16 @@ class WrongWayRule:
             and opposite_ratio >= self.minimum_opposite_step_ratio
         )
         self._wrong_count[track_id] = self._wrong_count.get(track_id, 0) + 1 if is_wrong_way else 0
-        if (
-            track_id not in self._fired
-            and self._inside_age[track_id] >= self.min_track_age_frames
-            and self._wrong_count[track_id] >= self.consecutive_frames
-        ):
+        checks = {"not_already_fired": track_id not in self._fired,
+                  "track_mature": self._inside_age[track_id] >= self.min_track_age_frames,
+                  "opposite_motion_persistent": self._wrong_count[track_id] >= self.consecutive_frames}
+        self._record_decision(track_id, checks, direction_alignment=alignment,
+                              maximum_alignment=self.maximum_alignment, opposite_step_ratio=opposite_ratio,
+                              minimum_opposite_step_ratio=self.minimum_opposite_step_ratio,
+                              opposite_streak=self._wrong_count[track_id], required_streak=self.consecutive_frames,
+                              age=self._inside_age[track_id], minimum_age=self.min_track_age_frames,
+                              minimum_motion_pixels=self._minimum_motion(track_id))
+        if all(checks.values()):
             self._fired.add(track_id)
             return RuleTrigger(
                 track,

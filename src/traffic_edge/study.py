@@ -246,6 +246,7 @@ def run_study(cases: list[dict], output: Path, *, model: Path, tracker: str, dev
         if progress:
             progress(index, len(cases), case["name"])
         config = copy.deepcopy(case["configuration"])
+        config["diagnostics"] = {"record_frames": True}
         config.setdefault("yolo", {}).update(model=str(model.resolve()), tracker=tracker, device=runtime_device)
         config_path = output / f"{case['id']}-config.json"
         atomic_write_json(config_path, config)
@@ -275,7 +276,8 @@ def run_study(cases: list[dict], output: Path, *, model: Path, tracker: str, dev
                          "case_id": case["id"], "name": case["name"],
                          "timestamp_seconds": event["timestamp_seconds"], "candidate_event": event["candidate_event"],
                          "lane_id": event.get("lane_id"),
-                         "bbox_normalized": event.get("bbox_normalized") or event.get("vehicle_bbox_normalized")}
+                         "bbox_normalized": event.get("bbox_normalized") or event.get("vehicle_bbox_normalized"),
+                         "ground_point_normalized": event.get("ground_point_normalized") or event.get("vehicle_point_normalized")}
                 case_errors.append(error)
         _error_evidence(data_path(case["input_video"]), output, case_errors)
         errors.extend(case_errors)

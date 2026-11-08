@@ -66,7 +66,7 @@ MODEL_PATHS = {
     "yolo11n": PROJECT_ROOT / "yolo11n.pt",
     "yolov8n": PROJECT_ROOT / "yolov8n.pt",
 }
-RELEASE_VERSION = "1.3.0"
+RELEASE_VERSION = "1.4.0"
 CANDIDATE_CATALOG_PATH = DATA_DIR / "evaluation_candidates.json"
 CURATED_LIBRARY_PATH = DATA_DIR / "curated_video_library.json"
 MINIMUM_REVIEW_COVERAGE = 0.98
@@ -757,6 +757,34 @@ class AppState:
                     with self.lock:
                         self.jobs[job_id].update(status="error", error=str(error))
 
+        threading.Thread(target=worker, daemon=True).start()
+        return job_id
+
+    def new_diagnosis_job(self, run: str, error_id: str, device: str) -> str:
+        from . import diagnostics
+        directory, _inputs, case, _error = diagnostics._context(run, error_id)
+        device = normalize_device(device)
+        resolve_device(device)
+        job_id = uuid.uuid4().hex[:12]
+        output = directory / "diagnostic-replays" / f"{case['id']}-{job_id}"
+        with self.lock:
+            self.jobs[job_id] = {"id": job_id, "kind": "diagnosis", "status": "queued",
+                "stage": "Waiting for the processing queue", "error": None}
+
+        def worker() -> None:
+            def progress(current, total):
+                with self.lock:
+                    self.jobs[job_id]["stage"] = f"Recording decisions: {current}/{total} frames"
+            with self.processing_lock:
+                with self.lock:
+                    self.jobs[job_id]["status"] = "running"
+                try:
+                    diagnostics.replay_error(run, error_id, output, device, progress)
+                    with self.lock:
+                        self.jobs[job_id].update(status="complete", stage="Diagnostic replay complete")
+                except Exception as error:
+                    with self.lock:
+                        self.jobs[job_id].update(status="error", error=str(error))
         threading.Thread(target=worker, daemon=True).start()
         return job_id
 
@@ -1756,6 +1784,12 @@ class RequestHandler(BaseHTTPRequestHandler):
     def handle_study_get(self, parsed) -> None:
         try:
             query = parse_qs(parsed.query)
+            if parsed.path == "/api/study/diagnosis":
+                from .diagnostics import diagnose_error
+                track = query.get("track", [None])[0]
+                self.send_json(diagnose_error(query.get("run", [""])[0], query.get("error", [""])[0],
+                                             int(track) if track is not None else None))
+                return
             if parsed.path == "/api/study/cases":
                 registry = study.read_registry()
                 cases = [{key: value for key, value in case.items() if key != "configuration"}
@@ -1812,6 +1846,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             elif parsed.path == "/api/study/run":
                 job_id = self.state.new_study_job(str(payload["split"]), str(payload["model"]),
                                                   str(payload["tracker"]), str(payload.get("device", "auto")))
+                self.send_json({"job_id": job_id})
+            elif parsed.path == "/api/study/diagnosis-replay":
+                job_id = self.state.new_diagnosis_job(str(payload["run"]), str(payload["error"]),
+                                                       str(payload.get("device", "auto")))
                 self.send_json({"job_id": job_id})
             elif parsed.path == "/api/study/cases":
                 video = study.data_path(str(payload["video_path"]))

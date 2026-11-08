@@ -34,6 +34,8 @@ STUDY_STYLE = r'''
 .study-table{overflow-x:auto;margin:16px 0}.study-table table{width:100%;border-collapse:collapse}
 .study-table th,.study-table td{padding:9px 10px;text-align:left;border-bottom:1px solid #ccd0c5;vertical-align:top}
 .study-error{border-top:1px solid #ccd0c5;padding:16px 0}.study-error img,.study-error video{width:100%;max-width:420px;margin:8px 12px 8px 0;vertical-align:top}
+.study-error>button{display:block;margin-top:12px}.study-diagnosis:not(:empty){margin-top:16px;padding:16px;border:1px solid #ccd0c5;background:#f5f6f0}.study-diagnosis img{max-width:720px;display:block}.study-diagnosis label,.study-diagnosis>a{display:block;margin:12px 0}.study-diagnosis select{max-width:100%}.study-diagnosis td:last-child{min-width:280px;overflow-wrap:anywhere}
+.study-diagnosis .study-table{max-height:420px;overflow:auto}.study-diagnosis th{position:sticky;top:0;background:#eef0e8}
 .study-panel .row{margin:12px 0}.study-downloads{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0}
 '''
 
@@ -128,8 +130,74 @@ function renderStudyReport(report){
     if(error.crop){const image=document.createElement('img');image.src=studyAsset(report.run_name,error.crop.split('/').pop());image.alt='Selected vehicle at the unmatched event time';image.loading='lazy';card.appendChild(image)}
     if(error.clip){const video=document.createElement('video');video.controls=true;video.preload='none';video.src=studyAsset(report.run_name,error.clip.split('/').pop());card.appendChild(video)}
     const link=document.createElement('a');link.href='/api/study/source?run='+encodeURIComponent(report.run_name)+'&case='+encodeURIComponent(error.case_id)+'#t='+Number(error.timestamp_seconds);link.target='_blank';link.rel='noopener';link.textContent='Open original recording at this time';card.appendChild(link);
+    const inspect=document.createElement('button');inspect.textContent='Inspect decision trace';
+    const panel=document.createElement('div');panel.className='study-diagnosis';
+    inspect.onclick=()=>loadStudyDiagnosis(panel,report.run_name,error.event_id);
+    card.appendChild(inspect);card.appendChild(panel);
     host.appendChild(card);
   }
+}
+function diagnosisUrl(run,error,track){
+  return '/api/study/diagnosis?run='+encodeURIComponent(run)+'&error='+encodeURIComponent(error)+(track==null?'':'&track='+encodeURIComponent(track));
+}
+async function loadStudyDiagnosis(panel,run,error,track=null){
+  const version=(panel.requestVersion||0)+1;panel.requestVersion=version;
+  panel.textContent='Loading recorded decisions…';
+  try{
+    const data=await studyRequest(diagnosisUrl(run,error,track));
+    if(!panel.isConnected||version!==panel.requestVersion)return;
+    renderStudyDiagnosis(panel,run,error,data);
+  }catch(failure){if(panel.isConnected&&version===panel.requestVersion)panel.textContent=failure.message}
+}
+function renderStudyDiagnosis(panel,run,error,data){
+  const finding=document.createElement('p');finding.textContent=(data.stage?data.stage.replaceAll('_',' ')+': ':'')+data.finding;
+  panel.replaceChildren(finding);
+  if(!data.available){
+    const replay=document.createElement('button');replay.textContent='Replay this case with diagnostics';
+    replay.onclick=()=>replayStudyDiagnosis(panel,replay,run,error);panel.appendChild(replay);return;
+  }
+  const note=document.createElement('p');note.className='small-note';note.textContent=data.trace_note+' '+data.association_note;panel.appendChild(note);
+  if(data.anchor_image){const image=document.createElement('img');image.src=data.anchor_image;image.alt='Diagnostic overlay: LABEL in yellow; track IDs in blue; D marks filtered detections in grey';panel.appendChild(image)}
+  const filters=document.createElement('p');filters.className='small-note';
+  filters.textContent='Overlay: LABEL = yellow; tracked IDs = blue; D = filtered detections before association (when recorded). Detector filters: '+JSON.stringify(data.detector_filters);
+  panel.appendChild(filters);
+  if(data.candidates.length){
+    const label=document.createElement('label');label.textContent='Confirm the labelled vehicle: ';
+    const select=document.createElement('select');select.add(new Option('Select a recorded track',''));
+    for(const c of data.candidates)select.add(new Option(`ID ${c.track_id} · ${c.class_name} · ${c.time.toFixed(3)} s · box overlap ${c.iou}`,String(c.track_id)));
+    select.value=data.selected_track==null?'':String(data.selected_track);
+    select.onchange=()=>loadStudyDiagnosis(panel,run,error,select.value===''?null:Number(select.value));
+    label.appendChild(select);panel.appendChild(label);
+  }
+  const download=document.createElement('a');download.href=diagnosisUrl(run,error,data.selected_track);download.download=error+'-diagnosis.json';download.textContent='Download diagnostic JSON';panel.appendChild(download);
+  const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Frame decisions within two seconds of the event';details.appendChild(summary);
+  const table=document.createElement('div');table.className='study-table';
+  table.innerHTML='<table><thead><tr><th>Time</th><th>Detections</th><th>Track / lane</th><th>Signal</th><th>Actual checks and values</th></tr></thead><tbody>'+data.timeline.map(row=>{
+    const track=row.track,decision=row.decision;
+    const checks=decision?Object.entries(decision.checks).map(([name,passed])=>name+': '+(passed?'pass':'fail')).join('; '):'No evaluation for this rule / lane';
+    const values=decision?JSON.stringify(decision.values,(_key,value)=>typeof value==='number'?Number(value.toFixed(4)):value):'';
+    return `<tr><td>${row.time.toFixed(3)} s</td><td>${row.detection_count??'not recorded'}</td><td>${escapeHtml(track?'ID '+track.track_id+' · '+(track.lane_id||'unassigned')+' · '+(track.assignment_status||''):'No selected-ID observation')}</td><td>${escapeHtml(row.signal?row.signal.state==='not_configured'?'Not used by this lane':row.signal.state+' · red gate '+row.signal.is_red:'not recorded')}</td><td>${escapeHtml(checks+' '+values)}</td></tr>`;
+  }).join('')+'</tbody></table>';
+  details.appendChild(table);panel.appendChild(details);
+}
+async function replayStudyDiagnosis(panel,button,run,error){
+  button.disabled=true;const status=document.createElement('p');panel.appendChild(status);
+  const version=panel.requestVersion;
+  try{
+    const started=await studyRequest('/api/study/diagnosis-replay',{run,error,device:studyElement('studyDevice').value});
+    const poll=async()=>{
+      if(!panel.isConnected||panel.requestVersion!==version)return;
+      try{
+        const job=await studyRequest('/api/status?id='+encodeURIComponent(started.job_id));
+        if(!panel.isConnected||panel.requestVersion!==version)return;
+        if(job.kind!=='diagnosis'||job.status==='error')throw Error(job.error||'Diagnostic replay failed');
+        status.textContent=job.stage;
+        if(job.status==='complete'){await loadStudyDiagnosis(panel,run,error);return}
+        setTimeout(poll,1000);
+      }catch(failure){status.textContent=failure.message;button.disabled=false}
+    };
+    await poll();
+  }catch(failure){status.textContent=failure.message;button.disabled=false}
 }
 async function loadStudyReport(run){
   if(!run)return;

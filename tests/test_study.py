@@ -12,7 +12,8 @@ from urllib.request import Request, urlopen
 import cv2
 import numpy as np
 
-from traffic_edge import study, web_ui
+from traffic_edge import study, web_ui, diagnostics
+from traffic_edge.pipeline import run_pipeline
 from traffic_edge.demo import generate_builtin_examples
 from traffic_edge.storage import atomic_write_json
 
@@ -170,6 +171,104 @@ class StudyTests(unittest.TestCase):
                                  model=self.model, tracker="bytetrack", device="cpu", backend="demo")
         self.assertEqual(result["metrics"]["dataset"]["predicted_events"], 1)
         self.assertEqual(result["metrics"]["micro_average"]["true_positives"], 1)
+        case = study.read_registry()["cases"][0]
+        folder = self.root / "runs/synthetic" / case["id"]
+        summary = json.loads((folder / "summary.json").read_text())
+        trace = folder / "decision_trace.jsonl"
+        self.assertEqual(summary["decision_trace_sha256"], study.file_hash(trace))
+        rows = [json.loads(line) for line in trace.read_text().splitlines()]
+        self.assertEqual(len(rows)-1, summary["frames_processed"])
+        self.assertTrue(any(t["rules"] for r in rows[1:] for t in r["tracks"]))
+        config = json.loads((folder / "config_used.json").read_text())
+        config.pop("diagnostics")
+        config_path = self.root / "without-trace.json"
+        atomic_write_json(config_path, config)
+        normal = run_pipeline(video, self.root / "without-trace", config_path, "demo")
+        def events(summary):
+            return [(e["candidate_event"], e["track_id"], e["timestamp_seconds"])
+                    for e in map(json.loads, Path(summary["outputs"]["events"]).read_text().splitlines())]
+        self.assertEqual(events(summary), events(normal))
+        self.assertNotIn("decision_trace_sha256", normal)
+
+    def test_diagnostic_replay_preserves_metrics_and_verifies_inputs(self):
+        case = self.register("miss", [self.label()])
+        run_name = "study-20261108-120000-abcdef123456"
+        directory = self.root / "runs" / run_name
+        folder = directory / case["id"]
+        folder.mkdir(parents=True)
+        config_path = folder / "config_used.json"
+        atomic_write_json(config_path, self.config)
+        atomic_write_json(folder / "summary.json", {"config_sha256": study.file_hash(config_path)})
+        error = {"event_id": "error-00000", "case_id": case["id"], "kind": "FN",
+                 "timestamp_seconds": 2.5, "candidate_event": "candidate_wrong_way_driving",
+                 "lane_id": "lane-1", "bbox_normalized": [.4, .3, .6, .5]}
+        atomic_write_json(directory / "report.json", {"errors": [error], "metrics": {"false_negatives": 1}})
+        atomic_write_json(directory / "study_inputs.json", {"cases": [case], "model": "detector.pt",
+                                                            "model_sha256": study.file_hash(self.model)})
+        original_report = (directory / "report.json").read_bytes()
+        self.assertFalse(diagnostics.diagnose_error(run_name, "error-00000")["available"])
+        def replay(video, output, config, backend, **kwargs):
+            trace = output / "decision_trace.jsonl"
+            trace.write_text(json.dumps({"kind": "header", "schema_version": 1,
+                "source_sha256": case["source_sha256"], "config_sha256": study.file_hash(config),
+                "configuration": json.loads(config.read_text())})+'\n'+json.dumps({"kind": "frame",
+                "frame_index": 26, "time": 2.5, "detections": [], "tracks": [], "signals": {},
+                "raw_detection_status": "before_association"})+'\n')
+            atomic_write_json(output / "summary.json", {"config_sha256": study.file_hash(config),
+                                                        "decision_trace_sha256": study.file_hash(trace)})
+        output = directory / "diagnostic-replays" / (case["id"]+"-abc")
+        state = web_ui.AppState()
+        server = ThreadingHTTPServer(("127.0.0.1", 0), web_ui.make_handler(state))
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(thread.join)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        base = f"http://127.0.0.1:{server.server_port}"
+        url = base + f"/api/study/diagnosis?run={run_name}&error=error-00000"
+        with patch("traffic_edge.pipeline.run_pipeline", side_effect=replay) as pipeline:
+            with urlopen(url) as response:
+                self.assertFalse(json.load(response)["available"])
+            state.processing_lock.acquire()
+            try:
+                request = Request(base+"/api/study/diagnosis-replay", data=json.dumps({
+                    "run": run_name, "error": "error-00000", "device": "cpu"}).encode(),
+                    headers={"Content-Type": "application/json"})
+                with urlopen(request) as response:
+                    job_id = json.load(response)["job_id"]
+                self.assertEqual(state.get_job(job_id)["status"], "queued")
+                pipeline.assert_not_called()
+            finally:
+                state.processing_lock.release()
+            deadline = time.monotonic()+5
+            while state.get_job(job_id)["status"] not in {"complete", "error"} and time.monotonic()<deadline:
+                time.sleep(.02)
+            self.assertEqual(state.get_job(job_id)["status"], "complete", state.get_job(job_id))
+            with urlopen(url) as response:
+                result = json.load(response)
+            self.assertEqual(result["mode"], "replay")
+            self.assertEqual(result["stage"], "detection")
+            self.assertTrue(result["anchor_image"].startswith("data:image/jpeg;base64,"))
+            with self.assertRaises(HTTPError):
+                urlopen(url+"&track=not-an-id")
+            diagnostics.replay_error(run_name, "error-00000", output, "cpu")
+            self.assertEqual(pipeline.call_count, 1, "Completed trace must be reused")
+        self.assertEqual((directory / "report.json").read_bytes(), original_report)
+        output = directory / "diagnostic-replays" / (case["id"]+"-"+job_id)
+        (output / "decision_trace.jsonl").write_text("tampered")
+        with self.assertRaisesRegex(ValueError, "checksum"):
+            diagnostics.diagnose_error(run_name, "error-00000")
+
+    def test_replay_with_changed_model_cannot_publish_diagnostics(self):
+        case = self.register("miss", [self.label()])
+        run_name = "study-20261108-120000-abcdef123456"
+        directory = self.root / "runs" / run_name
+        directory.mkdir(parents=True)
+        atomic_write_json(directory / "report.json", {"errors": [{"event_id": "error-00000", "case_id": case["id"]}]})
+        atomic_write_json(directory / "study_inputs.json", {"cases": [case], "model": "detector.pt", "model_sha256": "changed"})
+        with self.assertRaisesRegex(ValueError, "weights are missing or changed"):
+            diagnostics.replay_error(run_name, "error-00000", directory / "replay", "cpu")
+        self.assertFalse((directory / "replay").exists())
 
     def test_web_api_registers_without_exposing_predictions_or_other_files(self):
         video, truth = self.review("web", [])

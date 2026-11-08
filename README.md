@@ -80,6 +80,12 @@ The register rejects source or physical-camera overlap between test and developm
 
 Completed batch reports remain available after restarting the application. The local register is stored in `data/study_registry.json`, and frozen batch inputs and reports are under `runs/study-*`. Removing a case from the register preserves its source, labels and previous results. Undefined metric denominators appear as a dash in the interface, while the underlying evaluator retains its documented zero convention.
 
+### Inspect missed events
+
+On a false-positive or missed-event card, choose **Inspect decision trace**. New batches record the filtered detector boxes before tracking, returned track IDs, lane ownership, signal states and actual rule gates. The diagnostic view shows the labelled vehicle against recorded IDs, plus frame decisions within two seconds of the event. Confirm the vehicle ID when the association is ambiguous. Download the diagnostic JSON to retain the review.
+
+The findings describe recorded conditions, rather than proving a single root cause. Missing tracks do not establish an identity switch; missing filtered boxes do not establish that no vehicle was visible. For older batches without traces, choose **Replay this case with diagnostics**. Replay requires the unchanged source, saved camera configuration and original model weights. It uses the current implementation, is labelled separately, and preserves the original metrics. Diagnostic traces stay local under the run directory and add processing/storage overhead; ordinary single-video runs leave recording disabled.
+
 ## Command-line use
 
 Run a configured video from PowerShell:

@@ -138,8 +138,30 @@ class UltralyticsByteTrackBackend(TrackingBackend):
             else "botsort.yaml"
         )
         self.fallback_tracker = FallbackDetectionTracker()
+        self.raw_detections = None
+        self.raw_detection_status = "not_recorded"
+        self._diagnostics_enabled = False
+
+    def enable_diagnostics(self) -> None:
+        if not self._diagnostics_enabled:
+            # Register before the first track() call, which installs the tracker callback.
+            self.model.add_callback("on_predict_postprocess_end", self._capture_detections)
+            self._diagnostics_enabled = True
+
+    def _capture_detections(self, predictor) -> None:
+        boxes = predictor.results[0].boxes
+        if boxes is not None and boxes.is_track:
+            self.raw_detection_status = "callback_after_association"
+            return
+        self.raw_detection_status = "before_association"
+        self.raw_detections = []
+        if boxes is not None:
+            for box, score, label in zip(boxes.xyxy.cpu().tolist(), boxes.conf.cpu().tolist(), boxes.cls.cpu().tolist()):
+                self.raw_detections.append({"bbox": box, "confidence": score, "class_id": int(label)})
 
     def track(self, frame: np.ndarray) -> list[TrackObservation]:
+        self.raw_detections = None
+        self.raw_detection_status = "not_recorded"
         result = self.model.track(
             frame,
             persist=True,

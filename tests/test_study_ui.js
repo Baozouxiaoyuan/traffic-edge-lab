@@ -58,6 +58,24 @@ async function main() {
   assert.equal(JSON.parse(requests[0].options.body).device, 'cpu');
   assert.equal(control('studyRunBtn').disabled, false, 'A failed start permits correction and retry');
   assert.equal(control('studyStatus').textContent, 'No registered test cases');
+  const panel = {isConnected: true, textContent: '', requestVersion: 0};
+  const diagnosed = [];
+  fixture.recordDiagnosis = (panel, run, error, data) => diagnosed.push(data.selected_track);
+  vm.runInContext('renderStudyDiagnosis = recordDiagnosis', fixture);
+  const diagnosticPending = {};
+  fixture.fetch = async url => new Promise(resolve => {diagnosticPending[url] = resolve;});
+  const oldDiagnosis = fixture.loadStudyDiagnosis(panel, 'batch', 'error-00001', 7);
+  const newDiagnosis = fixture.loadStudyDiagnosis(panel, 'batch', 'error-00001', 8);
+  diagnosticPending[fixture.diagnosisUrl('batch', 'error-00001', 8)]({ok: true,json: async()=>({selected_track:8})});
+  await newDiagnosis;
+  diagnosticPending[fixture.diagnosisUrl('batch', 'error-00001', 7)]({ok: true,json: async()=>({selected_track:7})});
+  await oldDiagnosis;
+  assert.deepEqual(diagnosed,[8],'A late response must not replace the newly selected vehicle');
+  const detached = fixture.loadStudyDiagnosis(panel, 'batch', 'error-00002');
+  panel.isConnected = false;
+  diagnosticPending[fixture.diagnosisUrl('batch', 'error-00002')]({ok:true,json:async()=>({selected_track:99})});
+  await detached;
+  assert.deepEqual(diagnosed,[8],'Changing reports must discard pending diagnostic responses');
   console.log('Study UI checks passed: blind review, split/device forwarding, undefined metrics, stale reports and retry.');
 }
 

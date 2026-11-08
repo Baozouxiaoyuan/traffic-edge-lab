@@ -14,6 +14,7 @@ import cv2
 import numpy as np
 
 from .backends import SyntheticColourTracker, TrackingBackend, UltralyticsByteTrackBackend
+from .diagnostics import DiagnosticRecorder
 from .geometry import denormalize_polygon, point_in_polygon
 from .rules import DirectedStopLineRule, RegionEntryRule, WrongWayRule
 from .scope import validate_config_scope
@@ -637,6 +638,12 @@ def _run_pipeline(
     last_owned_lane_by_track: dict[int, dict[str, Any]] = {}
     last_owned_frame_by_track: dict[int, int] = {}
     started = time.perf_counter()
+    recorder = None
+    if config.get("diagnostics", {}).get("record_frames", False):
+        trace_stream = resources.enter_context((output_dir / "decision_trace.jsonl").open("w", encoding="utf-8"))
+        recorder = DiagnosticRecorder(trace_stream, input_video, config, config_digest, width, height, fps)
+        if hasattr(backend, "enable_diagnostics"):
+            backend.enable_diagnostics()
 
     try:
         while True:
@@ -654,6 +661,7 @@ def _run_pipeline(
                 if detector and detector.last_state == "unknown":
                     lane["unknown_signal_frames"] += 1
             observations = backend.track(frame)
+            frame_decisions: dict[int, list] = defaultdict(list)
             assigned_lanes_by_track: dict[int, dict[str, Any]] = {}
             state_update_lanes_by_track: dict[int, dict[str, Any]] = {}
             recent_lane_exit_tracks: set[int] = set()
@@ -701,6 +709,8 @@ def _run_pipeline(
                             state_update_lanes_by_track[observation.track_id] = nearest_lane
                             lane_assignment_counts["outside_nearest_lane_state_update"] += 1
             for rule_lane, rule_kind, rule_engine in rule_engines:
+                if recorder:
+                    rule_engine.diagnostic_decisions = {}
                 # Crossing/entry state must break when detection or unique lane
                 # ownership is lost. Wrong-way keeps its own bounded gap policy.
                 frame_lanes = assigned_lanes_by_track if rule_kind == 'wrong_way' else state_update_lanes_by_track
@@ -806,8 +816,21 @@ def _run_pipeline(
                         observation.track_id in recent_lane_exit_tracks
                         and rule_kind == "red_light"
                     )
+                    if recorder:
+                        decision = rule_engine.diagnostic_decisions.get(observation.track_id, {"checks": {}, "values": {}})
+                        decision["checks"]["lane_output_eligible"] = trigger_is_lane_owned or trigger_is_boundary_crossing
+                        frame_decisions[observation.track_id].append({**decision, "lane_id": lane["id"],
+                            "rule": rule_kind, "triggered": trigger is not None,
+                            "emitted": trigger is not None and (trigger_is_lane_owned or trigger_is_boundary_crossing)})
                     if trigger is not None and (trigger_is_lane_owned or trigger_is_boundary_crossing):
                         triggers.append((trigger, lane))
+
+            if recorder:
+                recorder.record(frame_index, observations, lane_contexts, assigned=assigned_lanes_by_track,
+                    state_lanes=state_update_lanes_by_track, statuses=assignment_status_by_track,
+                    recent_exit=recent_lane_exit_tracks, last_owned_frame=last_owned_frame_by_track,
+                    decisions=frame_decisions, raw_detections=getattr(backend, "raw_detections", None),
+                    raw_status=getattr(backend, "raw_detection_status", "not_recorded"))
 
             for trigger, lane in triggers:
                 highlight_key = f"{lane['id']}:{trigger.rule_name}"
@@ -1081,6 +1104,11 @@ def _run_pipeline(
             "evidence_bundle": str((output_dir / "evidence_bundle.zip").resolve()),
         },
     }
+    if recorder:
+        trace_path = output_dir / "decision_trace.jsonl"
+        with trace_path.open("rb") as trace_file:
+            summary["decision_trace_sha256"] = hashlib.file_digest(trace_file, "sha256").hexdigest()
+        summary["outputs"]["decision_trace"] = str(trace_path.resolve())
     write_run_report(output_dir / "RUN_REPORT.md", summary, recorded_events)
     with (output_dir / "summary.json").open("w", encoding="utf-8") as stream:
         json.dump(summary, stream, indent=2, ensure_ascii=False)
