@@ -1,0 +1,8 @@
+# ByteTrack settings tuned for small, distant vehicles in fixed-camera footage.
+tracker_type: bytetrack
+track_high_thresh: 0.10
+track_low_thresh: 0.03
+new_track_thresh: 0.10
+track_buffer: 60
+match_thresh: 0.90
+fuse_score: true

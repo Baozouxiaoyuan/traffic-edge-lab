@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "profile_id": "zenodo-night-red-light-multi-rule",
+  "camera_id": "zenodo-night-red-light-multi-rule",
+  "display_name": "zenodo-night-red-light-multi-rule",
+  "source_signature": {
+    "width": 1280,
+    "height": 720,
+    "aspect_ratio": 1.777778
+  },
+  "calibration_time_seconds": 0.255,
+  "lanes": [
+    {
+      "id": "lane-1",
+      "name": "Lane 1",
+      "polygon": [
+        [
+          0.3229166666666667,
+          0.6808738425925925
+        ],
+        [
+          0.921875,
+          0.7216145833333333
+        ],
+        [
+          0.7645833333333333,
+          0.9938368055555555
+        ],
+        [
+          0.017708333333333333,
+          0.9956886574074074
+        ],
+        [
+          0.005208333333333333,
+          0.8475405092592593
+        ]
+      ],
+      "stop_line": [
+        [
+          0.325,
+          0.6845775462962963
+        ],
+        [
+          0.9260416666666667,
+          0.7234664351851852
+        ]
+      ],
+      "signal_rectangle": [
+        [
+          0.65,
+          0.10309606481481481
+        ],
+        [
+          0.6885416666666667,
+          0.20124421296296297
+        ]
+      ],
+      "direction": [
+        [
+          0.3020833333333333,
+          0.964207175925926
+        ],
+        [
+          0.5822916666666667,
+          0.73828125
+        ]
+      ],
+      "restricted_polygon": [],
+      "restricted_initial_presence": false,
+      "lane_assist": {
+        "method": "manual_direction_edit"
+      },
+      "enabled_rules": {
+        "red_light": true,
+        "wrong_way": true,
+        "restricted_zone": false
+      }
+    }
+  ],
+  "inference": {
+    "confidence": 0.1,
+    "image_size": 960,
+    "model_name": "yolov8n",
+    "tracker_name": "bytetrack"
+  },
+  "created_at": "2026-10-23T16:59:50",
+  "updated_at": "2026-10-23T16:59:50"
+}

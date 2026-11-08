@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "purpose": "Candidate real-video sources for held-out capstone evaluation. These entries are not accuracy ground truth until manual vehicle-level review is complete.",
+  "annotation_source": {
+    "name": "NVIDIA PhysicalAI Traffic Anomaly Reasoning / AI City Challenge 2026 Track 3",
+    "url": "https://huggingface.co/datasets/nvidia/PhysicalAI-Traffic-Anomaly-Reasoning",
+    "annotation_license": "CC BY 4.0",
+    "warning": "Upstream source-video terms remain applicable. Local copies are for capstone research and must not be redistributed without checking those terms. Training labels are machine-generated and are used only to shortlist footage, not as final ground truth."
+  },
+  "candidates": [
+    {
+      "id": "tar-accidentbench-b06-red-light",
+      "path": "data/real_examples/tar2026_candidates/accident_red_3ItkjSXfP6k.mp4",
+      "upstream_video_id": "Accident-Bench/land_space/medium/videos/3ItkjSXfP6k.mp4",
+      "rule": "red_light",
+      "source_id": "accidentbench-b06-intersection",
+      "duration_seconds": 11.3,
+      "status": "accepted_for_manual_review",
+      "reason": "Single fixed normal-perspective intersection view; signal heads, stop line and subject trajectory are visible.",
+      "review_hint": "Upstream discovery annotation points to a black sedan entering from the bottom at about 4.13 s after the signal turns red. Verify the exact stop-line crossing frame and vehicle box manually.",
+      "review_time_seconds": 4.13,
+      "sha256": "9026a9bbbf08d10f9680584e0151f8c4956091c17dad0911d5b39d6f976d6576",
+      "library_tier": "task_example",
+      "display_name": "B06: daytime signal and stop-line review",
+      "reviewed_replay": "One confirmed vehicle label at 5.669 s. The selected model matched it at 5.800 s in the test replay.",
+      "image_size": 1280,
+      "confidence": 0.05
+    },
+    {
+      "id": "tar-accidentbench-sa-ueha-red-light",
+      "path": "data/real_examples/tar2026_candidates/accident_red_NgN5FWA3yGs.mp4",
+      "upstream_video_id": "Accident-Bench/land_space/medium/videos/NgN5FWA3yGs.mp4",
+      "rule": "red_light",
+      "source_id": "accidentbench-sa-ueha-01",
+      "duration_seconds": 10.5,
+      "status": "accepted_for_manual_review",
+      "reason": "Single fixed intersection camera with a different viewpoint and traffic density; requires careful signal-to-approach assignment.",
+      "review_hint": "Upstream discovery annotation points to a gray sedan entering from the bottom at about 4.60 s and colliding near 5.5 s. Verify the earlier stop-line crossing frame manually.",
+      "review_time_seconds": 4.6,
+      "sha256": "6d60e9d4cdaeb4d802c4fabf9f34d169d651e31a1308f6596e7b2d81d35a6a32",
+      "library_tier": "task_example",
+      "display_name": "SA UEHA: daytime intersection red-light review",
+      "image_size": 1280,
+      "confidence": 0.05
+    },
+    {
+      "id": "tar-accidentbench-b016-red-light",
+      "path": "data/real_examples/tar2026_candidates/accident_red_YSGhwU9XxuY.mp4",
+      "upstream_video_id": "Accident-Bench/land_space/medium/videos/YSGhwU9XxuY.mp4",
+      "rule": "red_light",
+      "source_id": "accidentbench-b016-intersection",
+      "duration_seconds": 11.2,
+      "status": "accepted_for_manual_review",
+      "reason": "Single fixed normal-perspective intersection view; overhead red signals and crossing vehicle paths are visible.",
+      "review_hint": "Upstream discovery annotation points to a black pickup entering from the bottom-left at about 4.13 s after the signal becomes red near 4.0 s. Verify the exact crossing frame and vehicle box manually.",
+      "review_time_seconds": 4.13,
+      "sha256": "be9dff495b03138c306be1367029371de674dd732cb1ece151222a391f29002e",
+      "library_tier": "task_example",
+      "display_name": "B016: daytime overhead-signal and crossing review",
+      "image_size": 1280,
+      "confidence": 0.05
+    }
+  ]
+}

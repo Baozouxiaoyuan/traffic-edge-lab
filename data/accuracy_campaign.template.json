@@ -1,0 +1,58 @@
+{
+  "experiment_name": "held-out-video-red-light-ablation",
+  "tolerance_seconds": 0.5,
+  "spatial_tolerance_normalized": 0.12,
+  "bootstrap_iterations": 2000,
+  "bootstrap_seed": 20260923,
+  "variants": [
+    {
+      "name": "yolov8n-bytetrack-baseline",
+      "model": "../yolov8n.pt",
+      "tracker": "bytetrack"
+    },
+    {
+      "name": "yolo11n-bytetrack",
+      "model": "../yolo11n.pt",
+      "tracker": "bytetrack"
+    },
+    {
+      "name": "yolov8n-botsort",
+      "model": "../yolov8n.pt",
+      "tracker": "botsort"
+    },
+    {
+      "name": "yolo11n-botsort",
+      "model": "../yolo11n.pt",
+      "tracker": "botsort"
+    }
+  ],
+  "cases": [
+    {
+      "video_id": "tar-b06-red-light",
+      "source_group_id": "accidentbench-b06-intersection",
+      "split": "test",
+      "status": "needs_frozen_config",
+      "input_video": "real_examples/tar2026_candidates/accident_red_3ItkjSXfP6k.mp4",
+      "config": "../config/generated/REPLACE_WITH_SAVED_VIDEO_CONFIG.json",
+      "ground_truth": "annotations/Evaluation-video-tar-accidentbench-b06-red-light_ground_truth_20261023-213109.json"
+    },
+    {
+      "video_id": "tar-sa-ueha-red-light",
+      "source_group_id": "accidentbench-sa-ueha-01",
+      "split": "test",
+      "status": "needs_frozen_config",
+      "input_video": "real_examples/tar2026_candidates/accident_red_NgN5FWA3yGs.mp4",
+      "config": "../config/generated/REPLACE_WITH_SAVED_VIDEO_CONFIG.json",
+      "ground_truth": "annotations/Evaluation-video-tar-accidentbench-sa-ueha-red-light_ground_truth_20261023-213432.json"
+    },
+    {
+      "video_id": "tar-b016-red-light",
+      "source_group_id": "accidentbench-b016-intersection",
+      "split": "validation",
+      "status": "needs_frozen_config",
+      "input_video": "real_examples/tar2026_candidates/accident_red_YSGhwU9XxuY.mp4",
+      "config": "../config/generated/REPLACE_WITH_SAVED_VIDEO_CONFIG.json",
+      "ground_truth": "annotations/Evaluation-video-tar-accidentbench-b016-red-light_ground_truth_20261022-195759.json"
+    }
+  ]
+}

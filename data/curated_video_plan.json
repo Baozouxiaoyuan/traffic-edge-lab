@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "purpose": "Visually screened footage for traffic-rule development and prospective manual evaluation. A candidate is not event ground truth or a completed training dataset.",
+  "split_policy": "Use source_id as the conservative train/validation/test grouping key. Related Dagotel viewpoints and all Jackson Town Square recordings remain grouped. camera_id identifies geometry separately: a shared split group does not authorize reusing camera calibration. Existing held-out files are unchanged.",
+  "training_note": "The current system uses pretrained detection and deterministic rules. Video collection does not train a violation classifier. Full event labels, normal coverage and per-camera geometry are required before scoring or training.",
+  "videos": [
+    {
+      "id": "curated-tu-v1",
+      "display_name": "Dusk intersection: visible signals and stop boundary",
+      "source_path": "data/source_videos/tu-dat/v1.mov",
+      "path": "data/real_examples/curated/tu-v1.mp4",
+      "source_url": "https://drive.google.com/file/d/1JSk7I4SIeneQbnl4phvNuNOK60m4M_Nd/view",
+      "source_page": "https://github.com/pavana27/TU-DAT",
+      "provider": "Temple University TU-DAT real CCTV subset",
+      "source_id": "tu-signalized-dusk-straight-road",
+      "source_interval_seconds": [
+        1.2,
+        22.2
+      ],
+      "rule": "red_light",
+      "role": "violation_candidate",
+      "status": "withdrawn_insufficient_rule_evidence",
+      "library_tier": "supplementary",
+      "reason": "Not established as usable red-light evidence: controlling signal, stop boundary and continuous crossing require further verification.",
+      "review_hint": "Inspect the through vehicle approaching beside the waiting sedan before the collision; verify its signal and exact crossing frame.",
+      "quality_note": "Real fixed-camera research excerpt; no central detector labels. Source is a screen-recorded excerpt: encoded dimensions are not a claim about native camera resolution. Corner source marks are retained.",
+      "license_status": "Public author release; underlying video training/redistribution licence not explicitly specified. Retained locally for research review; not cleared for redistribution.",
+      "camera_id": "tu-signalized-dusk-straight-road",
+      "scene_type": "intersection",
+      "withdrawal_reason": "Not established as usable red-light evidence: controlling signal, stop boundary and continuous crossing require further verification."
+    },
+    {
+      "id": "curated-tu-v9",
+      "display_name": "Night junction: crossing truck and visible signals",
+      "source_path": "data/source_videos/tu-dat/v9.mov",
+      "path": "data/real_examples/curated/tu-v9.mp4",
+      "source_url": "https://drive.google.com/file/d/1pa3WvLCPJUBSpTwNcVg9uJfo-xqgpE35/view",
+      "source_page": "https://github.com/pavana27/TU-DAT",
+      "provider": "Temple University TU-DAT real CCTV subset",
+      "source_id": "tu-night-fourway-truck",
+      "source_interval_seconds": [
+        0.3,
+        7.5
+      ],
+      "rule": "red_light",
+      "role": "violation_candidate",
+      "status": "withdrawn_insufficient_rule_evidence",
+      "library_tier": "supplementary",
+      "reason": "Truck collision does not establish a red-light event; controlling signal and crossing boundary are ambiguous.",
+      "review_hint": "Review which signal controls the truck approaching from the upper-right; collision alone is not a red-light label.",
+      "quality_note": "Real fixed-camera research excerpt; no central detector labels. Source is a screen-recorded excerpt: encoded dimensions are not a claim about native camera resolution. Corner source marks are retained.",
+      "license_status": "Public author release; underlying video training/redistribution licence not explicitly specified. Retained locally for research review; not cleared for redistribution.",
+      "camera_id": "tu-night-fourway-truck",
+      "scene_type": "intersection",
+      "withdrawal_reason": "Truck collision does not establish a red-light event; controlling signal and crossing boundary are ambiguous."
+    },
+    {
+      "id": "curated-tu-v14",
+      "display_name": "Day road: vehicle travelling in an opposing lane",
+      "source_path": "data/source_videos/tu-dat/v14.mov",
+      "path": "data/real_examples/curated/tu-v14.mp4",
+      "source_url": "https://drive.google.com/file/d/1VZ-gCwYfgCK86ynccLuy6b1-sCAQhSpl/view",
+      "source_page": "https://github.com/pavana27/TU-DAT",
+      "provider": "Temple University TU-DAT real CCTV subset",
+      "source_id": "tu-dagotel-related-road-cameras",
+      "source_interval_seconds": [
+        0.25,
+        5.8
+      ],
+      "rule": "wrong_way",
+      "role": "violation_candidate",
+      "status": "accepted_for_manual_review",
+      "library_tier": "supplementary",
+      "reason": "Clear centre divider, multiple normal vehicles for direction context and a visible candidate trajectory. Playback controls at the end are excluded.",
+      "review_hint": "Track the light SUV travelling away along the side carrying approaching traffic. Confirm legal lane direction rather than inferring it from the crash.",
+      "quality_note": "Real fixed-camera research excerpt; no central detector labels. Source is a screen-recorded excerpt: encoded dimensions are not a claim about native camera resolution. Corner source marks are retained.",
+      "license_status": "Public author release; underlying video training/redistribution licence not explicitly specified. Retained locally for research review; not cleared for redistribution.",
+      "camera_id": "tu-dagotel-day-straight-road",
+      "scene_type": "straight_road"
+    },
+    {
+      "id": "curated-tu-v5",
+      "display_name": "Night road: centre-line incursion",
+      "source_path": "data/source_videos/tu-dat/v5.mov",
+      "path": "data/real_examples/curated/tu-v5.mp4",
+      "source_url": "https://drive.google.com/file/d/1nRNGS-W3E0LhrSFYR8ws4Ln4osn1iGgJ/view",
+      "source_page": "https://github.com/pavana27/TU-DAT",
+      "provider": "Temple University TU-DAT real CCTV subset",
+      "source_id": "tu-dagotel-related-road-cameras",
+      "source_interval_seconds": [
+        0.3,
+        10.7
+      ],
+      "rule": "wrong_way",
+      "role": "violation_candidate",
+      "status": "withdrawn_insufficient_rule_evidence",
+      "library_tier": "supplementary",
+      "reason": "Brief collision-related centreline incursion does not establish sustained wrong-way travel.",
+      "review_hint": "Review the vehicle entering the opposing side around the middle of the clip; mark only sustained wrong-way motion supported by the visible lane direction.",
+      "quality_note": "Real fixed-camera research excerpt; no central detector labels. Source is a screen-recorded excerpt: encoded dimensions are not a claim about native camera resolution. Corner source marks are retained.",
+      "license_status": "Public author release; underlying video training/redistribution licence not explicitly specified. Retained locally for research review; not cleared for redistribution.",
+      "camera_id": "tu-dagotel-night-junction",
+      "scene_type": "intersection",
+      "withdrawal_reason": "Brief collision-related centreline incursion does not establish sustained wrong-way travel."
+    },
+    {
+      "id": "curated-tu-v18",
+      "display_name": "Day road: vehicle enters a median barrier area",
+      "source_path": "data/source_videos/tu-dat/v18.mov",
+      "path": "data/real_examples/curated/tu-v18.mp4",
+      "source_url": "https://drive.google.com/file/d/1MwXXiVd63DbqmvfHpk_VkP7Rp7vL4vBf/view",
+      "source_page": "https://github.com/pavana27/TU-DAT",
+      "provider": "Temple University TU-DAT real CCTV subset",
+      "source_id": "tu-avk-median-barrier",
+      "source_interval_seconds": [
+        0.15,
+        5.7
+      ],
+      "rule": "restricted_zone",
+      "role": "violation_candidate",
+      "status": "accepted_for_manual_review",
+      "library_tier": "supplementary",
+      "reason": "Fixed camera, clear lane/median geometry and complete entry into the divider; corner provider mark does not cover the event.",
+      "review_hint": "Review the sedan leaving the carriageway and entering the physical divider area. Draw the restricted region only on that visible divider.",
+      "quality_note": "Real fixed-camera research excerpt; no central detector labels. Source is a screen-recorded excerpt: encoded dimensions are not a claim about native camera resolution. Corner source marks are retained.",
+      "license_status": "Public author release; underlying video training/redistribution licence not explicitly specified. Retained locally for research review; not cleared for redistribution.",
+      "camera_id": "tu-avk-median-barrier",
+      "scene_type": "straight_road"
+    },
+    {
+      "id": "curated-tu-v28",
+      "display_name": "Red-signal queue: distinguish a rear-end crash from red running",
+      "source_path": "data/source_videos/tu-dat/v28.mov",
+      "path": "data/real_examples/curated/tu-v28.mp4",
+      "source_url": "https://drive.google.com/file/d/1XgNWFRDUJjBT0jywJUkBwbeRq2NAAWzm/view",
+      "source_page": "https://github.com/pavana27/TU-DAT",
+      "provider": "Temple University TU-DAT real CCTV subset",
+      "source_id": "tu-cam01-red-queue",
+      "source_interval_seconds": [
+        0.2,
+        6.1
+      ],
+      "rule": "red_light",
+      "role": "control_candidate",
+      "status": "withdrawn_insufficient_rule_evidence",
+      "library_tier": "supplementary",
+      "reason": "Rear-end collision is not red-light evidence; clip is too short to establish a useful complete signal cycle.",
+      "review_hint": "Vehicles queue at red before a rear-end impact. Review the full clip; do not label a collision or forced movement as red-light running without crossing evidence.",
+      "quality_note": "Real fixed-camera research excerpt; no central detector labels. Source is a screen-recorded excerpt: encoded dimensions are not a claim about native camera resolution. Corner source marks are retained.",
+      "license_status": "Public author release; underlying video training/redistribution licence not explicitly specified. Retained locally for research review; not cleared for redistribution.",
+      "camera_id": "tu-cam01-red-queue",
+      "scene_type": "intersection",
+      "withdrawal_reason": "Rear-end collision is not red-light evidence; clip is too short to establish a useful complete signal cycle."
+    },
+    {
+      "id": "curated-tu-v12",
+      "display_name": "Divided traffic flow: normal direction control",
+      "source_path": "data/source_videos/tu-dat/v12.mov",
+      "path": "data/real_examples/curated/tu-v12.mp4",
+      "source_url": "https://drive.google.com/file/d/174P5k3AqcTmC8IJ8LcLTYFv1i_9SRGYy/view",
+      "source_page": "https://github.com/pavana27/TU-DAT",
+      "provider": "Temple University TU-DAT real CCTV subset",
+      "source_id": "tu-yield-junction-normal-flow",
+      "source_interval_seconds": [
+        0.2,
+        8.0
+      ],
+      "rule": "wrong_way",
+      "role": "control_candidate",
+      "status": "accepted_for_manual_review",
+      "library_tier": "supplementary",
+      "reason": "Clear lane edges and both traffic directions; tests lane-specific ownership and avoids using a yield sign as a stop requirement.",
+      "review_hint": "Review every car in the selected lane. The sign is a yield sign, so this must not be presented as a failure-to-stop example.",
+      "quality_note": "Real fixed-camera research excerpt; no central detector labels. Source is a screen-recorded excerpt: encoded dimensions are not a claim about native camera resolution. Corner source marks are retained.",
+      "license_status": "Public author release; underlying video training/redistribution licence not explicitly specified. Retained locally for research review; not cleared for redistribution.",
+      "camera_id": "tu-yield-junction-normal-flow",
+      "scene_type": "straight_road"
+    },
+    {
+      "id": "curated-jackson-day",
+      "display_name": "Day intersection: full signal cycles and queues",
+      "source_path": "data/source_videos/zenodo-14041920/2024-04-23 10-31-54.mp4",
+      "path": "data/real_examples/curated/jackson-day.mp4",
+      "source_url": "https://zenodo.org/records/14041920/files/2024-04-23%2010-31-54.mp4?download=1",
+      "source_page": "https://zenodo.org/records/14041920",
+      "provider": "Dataset for Traffic Evaluation / Tiago Silva",
+      "source_id": "zenodo-jackson-town-square",
+      "source_interval_seconds": [
+        12,
+        145
+      ],
+      "rule": "red_light",
+      "role": "control_candidate",
+      "status": "accepted_for_manual_review",
+      "library_tier": "supplementary",
+      "reason": "Continuous 1280x720 scene with visible signal phases, approaches and queues; browser intro/outro excluded by temporal trim only.",
+      "review_hint": "Review the entire clip before calling it a negative. Confirm lane-to-signal ownership and distinguish permitted turns from through red-light running.",
+      "quality_note": "1280x720 source; corner provider mark retained. No detector overlay, central captions, synthetic sharpening or upscaling. All four Jackson clips belong to one source group.",
+      "license_status": "Official Zenodo record currently supplies no explicit video licence. Local research review only; redistribution and model-training permissions remain unverified.",
+      "camera_id": "zenodo-jackson-town-square",
+      "scene_type": "intersection"
+    },
+    {
+      "id": "curated-jackson-night",
+      "display_name": "Night intersection: signal cycles and stopped traffic",
+      "source_path": "data/source_videos/zenodo-14041920/2024-04-24 10-35-00.mp4",
+      "path": "data/real_examples/curated/jackson-night.mp4",
+      "source_url": "https://zenodo.org/records/14041920/files/2024-04-24%2010-35-00.mp4?download=1",
+      "source_page": "https://zenodo.org/records/14041920",
+      "provider": "Dataset for Traffic Evaluation / Tiago Silva",
+      "source_id": "zenodo-jackson-town-square",
+      "source_interval_seconds": [
+        12,
+        190
+      ],
+      "rule": "red_light",
+      "role": "control_candidate",
+      "status": "accepted_for_manual_review",
+      "library_tier": "supplementary",
+      "reason": "Continuous 1280x720 scene with visible signal phases, approaches and queues; browser intro/outro excluded by temporal trim only.",
+      "review_hint": "Review the entire clip before calling it a negative. Confirm lane-to-signal ownership and distinguish permitted turns from through red-light running.",
+      "quality_note": "1280x720 source; corner provider mark retained. No detector overlay, central captions, synthetic sharpening or upscaling. All four Jackson clips belong to one source group.",
+      "license_status": "Official Zenodo record currently supplies no explicit video licence. Local research review only; redistribution and model-training permissions remain unverified.",
+      "camera_id": "zenodo-jackson-town-square",
+      "scene_type": "intersection"
+    },
+    {
+      "id": "curated-jackson-dusk",
+      "display_name": "Dusk intersection: buses, queues and signal changes",
+      "source_path": "data/source_videos/zenodo-14041920/2024-11-04 12-00-31.mp4",
+      "path": "data/real_examples/curated/jackson-dusk.mp4",
+      "source_url": "https://zenodo.org/records/14041920/files/2024-11-04%2012-00-31.mp4?download=1",
+      "source_page": "https://zenodo.org/records/14041920",
+      "provider": "Dataset for Traffic Evaluation / Tiago Silva",
+      "source_id": "zenodo-jackson-town-square",
+      "source_interval_seconds": [
+        12,
+        95
+      ],
+      "rule": "red_light",
+      "role": "control_candidate",
+      "status": "accepted_for_manual_review",
+      "library_tier": "supplementary",
+      "reason": "Continuous 1280x720 scene with visible signal phases, approaches and queues; browser intro/outro excluded by temporal trim only.",
+      "review_hint": "Review the entire clip before calling it a negative. Confirm lane-to-signal ownership and distinguish permitted turns from through red-light running.",
+      "quality_note": "1280x720 source; corner provider mark retained. No detector overlay, central captions, synthetic sharpening or upscaling. All four Jackson clips belong to one source group.",
+      "license_status": "Official Zenodo record currently supplies no explicit video licence. Local research review only; redistribution and model-training permissions remain unverified.",
+      "camera_id": "zenodo-jackson-town-square",
+      "scene_type": "intersection"
+    },
+    {
+      "id": "curated-jackson-winter-day",
+      "display_name": "Winter daylight intersection: continuous traffic review",
+      "source_path": "data/source_videos/zenodo-14041920/teste2_6.mp4",
+      "path": "data/real_examples/curated/jackson-winter-day.mp4",
+      "source_url": "https://zenodo.org/records/14041920/files/teste2_6.mp4?download=1",
+      "source_page": "https://zenodo.org/records/14041920",
+      "provider": "Dataset for Traffic Evaluation / Tiago Silva",
+      "source_id": "zenodo-jackson-town-square",
+      "source_interval_seconds": [
+        12,
+        88
+      ],
+      "rule": "red_light",
+      "role": "control_candidate",
+      "status": "accepted_for_manual_review",
+      "library_tier": "supplementary",
+      "reason": "Continuous 1280x720 scene with visible signal phases, approaches and queues; browser intro/outro excluded by temporal trim only.",
+      "review_hint": "Review the entire clip before calling it a negative. Confirm lane-to-signal ownership and distinguish permitted turns from through red-light running.",
+      "quality_note": "1280x720 source; corner provider mark retained. No detector overlay, central captions, synthetic sharpening or upscaling. All four Jackson clips belong to one source group.",
+      "license_status": "Official Zenodo record currently supplies no explicit video licence. Local research review only; redistribution and model-training permissions remain unverified.",
+      "camera_id": "zenodo-jackson-town-square-side-angle",
+      "scene_type": "intersection"
+    }
+  ],
+  "rejections": [
+    {
+      "source": "NJIT built-in wrong_way_cam1",
+      "decision": "legacy_only",
+      "reason": "360x240 with embedded central Korean detection overlay; preserve old regression but remove primary recommendation."
+    },
+    {
+      "source": "Idiap built-in late-stop and pedestrian-area",
+      "decision": "legacy_only",
+      "reason": "360x288 and incomplete stop-line approach; preserve limitation studies and do not market as main training/test samples."
+    },
+    {
+      "source": "TU-DAT v2/v3",
+      "decision": "excluded",
+      "reason": "Relevant subject is a motorcycle; outside the project vehicle scope."
+    },
+    {
+      "source": "TU-DAT v33/v34/v35 and wrong_way1",
+      "decision": "excluded",
+      "reason": "Large news marks, replay/hover overlays, short context or camera edits."
+    },
+    {
+      "source": "TU-DAT v8/v19/v22/v24/v27",
+      "decision": "not_promoted",
+      "reason": "Crash footage alone does not establish one of the four configured rules; controlling evidence is incomplete or scene changes occur."
+    },
+    {
+      "source": "AccidentBench newly downloaded eight-video shortlist",
+      "decision": "not_promoted",
+      "reason": "Some are 240p/360p, edited, rain-obscured or lack a visible controlled stop boundary. Preserve discovery records; do not count them as qualified red-light clips."
+    },
+    {
+      "source": "Zenodo rlr_occasions compilation",
+      "decision": "no_new_primary_examples",
+      "reason": "Several internal edits, monochrome intervals and end cards. Already overlaps the old development sample; not inflated into independent test sources."
+    },
+    {
+      "source": "RunningRedlight author Drive folder",
+      "decision": "not_downloaded",
+      "reason": "Public folder did not expose downloadable files to the connector or anonymous webpage. Not bypassed."
+    },
+    {
+      "source": "TU-DAT BeamNG.drive folder",
+      "decision": "not_used",
+      "reason": "Simulated footage is not real-world violation evidence."
+    },
+    {
+      "source": "TU-DAT wrong_way2.mov / roundabout approach",
+      "decision": "excluded_from_current_scope",
+      "reason": "Roundabout lane and priority reasoning has not been validated. Removed at user request."
+    }
+  ],
+  "active_rules": [
+    "red_light",
+    "wrong_way",
+    "restricted_zone"
+  ],
+  "excluded_scene_types": [
+    "roundabout"
+  ]
+}

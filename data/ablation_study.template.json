@@ -1,0 +1,23 @@
+{
+  "experiment_name": "detector-tracker-ablation",
+  "variants": [
+    {
+      "name": "yolov8n-bytetrack-baseline",
+      "detector": "yolov8n",
+      "tracker": "bytetrack",
+      "study_manifest": "evaluation_study.yolov8n-bytetrack.json"
+    },
+    {
+      "name": "yolo11n-bytetrack",
+      "detector": "yolo11n",
+      "tracker": "bytetrack",
+      "study_manifest": "evaluation_study.yolo11n-bytetrack.json"
+    },
+    {
+      "name": "yolov8n-botsort",
+      "detector": "yolov8n",
+      "tracker": "botsort",
+      "study_manifest": "evaluation_study.yolov8n-botsort.json"
+    }
+  ]
+}

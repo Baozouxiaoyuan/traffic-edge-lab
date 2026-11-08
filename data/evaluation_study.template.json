@@ -1,0 +1,38 @@
+{
+  "study_name": "capstone-held-out-event-study",
+  "tolerance_seconds": 0.5,
+  "spatial_tolerance_normalized": 0.12,
+  "bootstrap_iterations": 2000,
+  "bootstrap_seed": 20260923,
+  "videos": [
+    {
+      "video_id": "njit-two-carriageway-development",
+      "source_group_id": "njit-two-carriageway-validation",
+      "split": "development",
+      "status": "development_only",
+      "note": "Used repeatedly for algorithm development; prohibited from final accuracy claims."
+    },
+    {
+      "video_id": "zenodo-video4-tracking-development",
+      "source_group_id": "zenodo-video4-tracking-stress",
+      "split": "development",
+      "status": "unlabelled",
+      "note": "Tracking stress regression only."
+    },
+    {
+      "video_id": "idiap-pedestrian-area-test",
+      "source_group_id": "idiap-junction",
+      "split": "test",
+      "status": "needs_full_labels",
+      "duration_seconds": 30.0,
+      "events_path": "../runs/idiap-pedestrian-area-validation-v3/events.jsonl",
+      "ground_truth_path": "annotations/idiap_pedestrian_area_ground_truth.json",
+      "note": "Shares one source viewpoint with another test excerpt and counts as one source group."
+    }
+  ],
+  "active_rules": [
+    "red_light",
+    "wrong_way",
+    "restricted_zone"
+  ]
+}

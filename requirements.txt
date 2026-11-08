@@ -1,0 +1,8 @@
+ultralytics==8.4.135
+opencv-python==4.12.0.88
+numpy>=2.0,<2.3
+lap>=0.5.12
+transformers==4.57.6
+safetensors==0.8.0
+scipy>=1.14,<2
+pillow>=12.0

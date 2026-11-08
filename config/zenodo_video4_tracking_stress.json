@@ -1,0 +1,71 @@
+{
+  "camera_id": "zenodo-video4-tracking-stress",
+  "enabled_rules": {
+    "red_light": false,
+    "wrong_way": true,
+    "restricted_zone": false
+  },
+  "forbidden_region": {
+    "name": "main_inbound_approach",
+    "normalized_polygon": [
+      [
+        0.24,
+        0.48
+      ],
+      [
+        0.77,
+        0.48
+      ],
+      [
+        0.92,
+        1.0
+      ],
+      [
+        0.08,
+        1.0
+      ]
+    ]
+  },
+  "controlled_movement": {
+    "normalized_direction": [
+      [
+        0.55,
+        0.92
+      ],
+      [
+        0.53,
+        0.37
+      ]
+    ],
+    "minimum_alignment": 0.75,
+    "minimum_motion_pixels": 12.0
+  },
+  "wrong_way": {
+    "minimum_inside_seconds": 0.2,
+    "reference_frame_height": 720,
+    "maximum_alignment": -0.7,
+    "minimum_motion_pixels": 12.0,
+    "consecutive_frames": 2,
+    "minimum_opposite_step_ratio": 0.6,
+    "maximum_occlusion_seconds": 0.5,
+    "enable_tracklet_stitching": true,
+    "maximum_tracklet_stitch_seconds": 0.8,
+    "maximum_stitch_distance_bbox_diagonals": 1.5
+  },
+  "rule": {
+    "event_type": "candidate_red_signal_violation",
+    "min_track_age_frames": 5
+  },
+  "yolo": {
+    "model": "yolov8n.pt",
+    "confidence": 0.15,
+    "iou": 0.5,
+    "vehicle_classes": [
+      2,
+      5,
+      7
+    ],
+    "image_size": 960,
+    "tracker": "bytetrack"
+  }
+}

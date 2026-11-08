@@ -1,0 +1,22 @@
+{
+  "camera_id": "demo-camera-01",
+  "forbidden_region": {
+    "name": "right_lane_restricted_zone",
+    "normalized_polygon": [
+      [0.62, 0.17],
+      [0.95, 0.17],
+      [0.95, 0.83],
+      [0.62, 0.83]
+    ]
+  },
+  "rule": {
+    "event_type": "candidate_lane_region_violation",
+    "min_track_age_frames": 3
+  },
+  "yolo": {
+    "model": "yolov8n.pt",
+    "confidence": 0.25,
+    "iou": 0.5,
+    "vehicle_classes": [2, 5, 7]
+  }
+}

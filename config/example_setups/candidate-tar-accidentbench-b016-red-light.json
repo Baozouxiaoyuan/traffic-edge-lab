@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "profile_id": "accidentbench-b016-intersection",
+  "camera_id": "accidentbench-b016-intersection",
+  "display_name": "accidentbench-b016-intersection",
+  "source_signature": {
+    "width": 450,
+    "height": 360,
+    "aspect_ratio": 1.25
+  },
+  "calibration_time_seconds": 1.293,
+  "lanes": [
+    {
+      "id": "lane-1",
+      "name": "Lane 1",
+      "polygon": [
+        [
+          0.17323076923076924,
+          0.39572115384615386
+        ],
+        [
+          0.7738461538461539,
+          0.4726442307692308
+        ],
+        [
+          0.3750769230769231,
+          0.9941826923076923
+        ],
+        [
+          0.0009230769230769231,
+          0.8726442307692308
+        ],
+        [
+          0.004615384615384616,
+          0.5034134615384616
+        ]
+      ],
+      "stop_line": [
+        [
+          0.14,
+          0.39110576923076923
+        ],
+        [
+          0.8329230769230769,
+          0.4726442307692308
+        ]
+      ],
+      "signal_rectangle": [
+        [
+          0.7492307692307693,
+          0.10495192307692308
+        ],
+        [
+          0.764,
+          0.13572115384615385
+        ]
+      ],
+      "direction": [
+        [
+          0.18923076923076923,
+          0.9034134615384616
+        ],
+        [
+          0.6286153846153846,
+          0.5141826923076923
+        ]
+      ],
+      "restricted_polygon": [],
+      "restricted_initial_presence": false,
+      "lane_assist": {
+        "method": "manual_direction_edit",
+        "boundary_lines": []
+      },
+      "enabled_rules": {
+        "red_light": true,
+        "wrong_way": false,
+        "restricted_zone": false
+      }
+    }
+  ],
+  "inference": {
+    "confidence": 0.05,
+    "image_size": 1280,
+    "model_name": "yolov8n",
+    "tracker_name": "bytetrack"
+  },
+  "created_at": "2026-11-05T23:50:34",
+  "updated_at": "2026-11-05T23:50:34",
+  "example_key": "candidate-tar-accidentbench-b016-red-light"
+}

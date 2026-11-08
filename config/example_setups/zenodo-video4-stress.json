@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "profile_id": "zenodo-video4-verified-11100",
+  "camera_id": "zenodo-video4-verified-11100",
+  "display_name": "Zenodo video4 - verified 11.100 s",
+  "source_signature": {
+    "width": 1280,
+    "height": 720,
+    "aspect_ratio": 1.777778
+  },
+  "calibration_time_seconds": 0.0,
+  "lanes": [
+    {
+      "id": "lane-1",
+      "name": "Lane 1",
+      "polygon": [
+        [
+          0.067311,
+          0.543105
+        ],
+        [
+          0.81674,
+          0.632136
+        ],
+        [
+          0.597796,
+          0.994207
+        ],
+        [
+          0.012792,
+          0.997284
+        ],
+        [
+          0.005868,
+          0.666506
+        ]
+      ],
+      "stop_line": [
+        [
+          0.085484,
+          0.548042
+        ],
+        [
+          0.823663,
+          0.635736
+        ]
+      ],
+      "signal_rectangle": [
+        [
+          0.599527,
+          0.0988
+        ],
+        [
+          0.583084,
+          0.023414
+        ]
+      ],
+      "direction": [
+        [
+          0.201447,
+          0.894204
+        ],
+        [
+          0.475776,
+          0.677276
+        ]
+      ],
+      "restricted_polygon": [],
+      "enabled_rules": {
+        "red_light": true,
+        "restricted_zone": false,
+        "wrong_way": false
+      }
+    }
+  ],
+  "inference": {
+    "confidence": 0.15,
+    "image_size": 960,
+    "model_name": "yolov8n",
+    "tracker_name": "bytetrack"
+  },
+  "created_at": "2026-11-06T00:18:02",
+  "updated_at": "2026-11-06T00:46:04",
+  "example_key": "zenodo-video4-stress"
+}

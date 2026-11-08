@@ -1,0 +1,7 @@
+[
+  {
+    "timestamp_seconds": 3.5,
+    "candidate_event": "candidate_lane_region_violation",
+    "description": "Blue vehicle enters the restricted region"
+  }
+]

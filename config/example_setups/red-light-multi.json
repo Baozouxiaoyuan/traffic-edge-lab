@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "profile_id": "zenodo-night-red-light-multi-rule",
+  "camera_id": "zenodo-night-red-light-multi-rule",
+  "display_name": "zenodo-night-red-light-multi-rule",
+  "source_signature": {
+    "width": 1280,
+    "height": 720,
+    "aspect_ratio": 1.777778
+  },
+  "calibration_time_seconds": 0.0,
+  "lanes": [
+    {
+      "id": "lane-1",
+      "name": "Lane 1",
+      "polygon": [
+        [
+          0.14558840222485284,
+          0.6793899731888027
+        ],
+        [
+          0.9198112442635445,
+          0.7199815492835933
+        ],
+        [
+          0.7589472489337895,
+          0.9948972237437657
+        ],
+        [
+          0.0023675547699742163,
+          0.9893620088217487
+        ],
+        [
+          0.004443219225842022,
+          0.7827139850664514
+        ]
+      ],
+      "stop_line": [
+        [
+          0.16115588564386138,
+          0.668319543344769
+        ],
+        [
+          0.9229247409473462,
+          0.7089111194395595
+        ]
+      ],
+      "signal_rectangle": [
+        [
+          0.515,
+          0.035
+        ],
+        [
+          0.555,
+          0.18
+        ]
+      ],
+      "direction": [
+        [
+          0.30541456532667394,
+          0.9690662207743536
+        ],
+        [
+          0.5742131123615548,
+          0.7384322656903163
+        ]
+      ],
+      "restricted_polygon": [
+        [
+          0.00029189031410641026,
+          0.5004180240435898
+        ],
+        [
+          0.5098675142296528,
+          0.39340386888459655
+        ],
+        [
+          0.4382570905022135,
+          0.3251362181797215
+        ],
+        [
+          0.004443219225842022,
+          0.36941793755585667
+        ]
+      ],
+      "restricted_initial_presence": false,
+      "lane_assist": {
+        "method": "manual_polygon",
+        "review_required": false,
+        "boundary_lines": []
+      },
+      "enabled_rules": {
+        "red_light": true,
+        "wrong_way": true,
+        "restricted_zone": true
+      }
+    }
+  ],
+  "inference": {
+    "confidence": 0.1,
+    "image_size": 960,
+    "model_name": "yolov8n",
+    "tracker_name": "bytetrack"
+  },
+  "created_at": "2026-11-05T23:36:39",
+  "updated_at": "2026-11-05T23:36:39",
+  "example_key": "red-light-multi"
+}

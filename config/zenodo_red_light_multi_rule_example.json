@@ -1,0 +1,121 @@
+{
+  "camera_id": "zenodo-night-red-light-multi-rule",
+  "enabled_rules": {
+    "red_light": true,
+    "wrong_way": true,
+    "restricted_zone": true
+  },
+  "forbidden_region": {
+    "name": "camera_side_approach",
+    "normalized_polygon": [
+      [
+        0.18,
+        0.57
+      ],
+      [
+        0.91,
+        0.56
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "stop_line": {
+    "normalized_points": [
+      [
+        0.25,
+        0.635
+      ],
+      [
+        0.91,
+        0.61
+      ]
+    ]
+  },
+  "traffic_signal": {
+    "normalized_rectangle": [
+      [
+        0.515,
+        0.035
+      ],
+      [
+        0.555,
+        0.18
+      ]
+    ],
+    "minimum_red_ratio": 0.005,
+    "history_frames": 3
+  },
+  "controlled_movement": {
+    "normalized_direction": [
+      [
+        0.43,
+        0.9
+      ],
+      [
+        0.73,
+        0.43
+      ]
+    ],
+    "minimum_alignment": 0.65,
+    "minimum_motion_pixels": 12.0
+  },
+  "wrong_way": {
+    "minimum_inside_seconds": 0.25,
+    "reference_frame_height": 720,
+    "maximum_alignment": -0.7,
+    "minimum_motion_pixels": 15.0,
+    "consecutive_frames": 3,
+    "minimum_opposite_step_ratio": 0.7
+  },
+  "restricted_zone": {
+    "name": "near_left_pedestrian_corner",
+    "normalized_polygon": [
+      [
+        0.0,
+        0.54
+      ],
+      [
+        0.13,
+        0.53
+      ],
+      [
+        0.12,
+        0.72
+      ],
+      [
+        0.0,
+        0.76
+      ]
+    ]
+  },
+  "rule": {
+    "event_type": "candidate_red_signal_violation",
+    "min_track_age_frames": 5
+  },
+  "yolo": {
+    "model": "yolov8n.pt",
+    "confidence": 0.1,
+    "iou": 0.5,
+    "vehicle_classes": [
+      2,
+      5,
+      7
+    ],
+    "image_size": 960,
+    "tracker": "bytetrack"
+  },
+  "evidence": {
+    "event_clips": true,
+    "clip_pre_seconds": 2.0,
+    "clip_post_seconds": 3.0,
+    "incident_merge_window_seconds": 2.0,
+    "export_bundle": true
+  }
+}
