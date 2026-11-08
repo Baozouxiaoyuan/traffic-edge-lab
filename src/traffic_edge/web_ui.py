@@ -35,6 +35,8 @@ from .campaign import validate_campaign
 from .storage import atomic_write_json
 from .scope import ACTIVE_RULES, ACTIVE_SCENE_TYPES, validate_active_rules
 from .compute import compute_status, normalize_device, resolve_device
+from . import study
+from .study_ui import STUDY_HTML, STUDY_SCRIPT, STUDY_STYLE
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -64,7 +66,7 @@ MODEL_PATHS = {
     "yolo11n": PROJECT_ROOT / "yolo11n.pt",
     "yolov8n": PROJECT_ROOT / "yolov8n.pt",
 }
-RELEASE_VERSION = "1.2.0"
+RELEASE_VERSION = "1.3.0"
 CANDIDATE_CATALOG_PATH = DATA_DIR / "evaluation_candidates.json"
 CURATED_LIBRARY_PATH = DATA_DIR / "curated_video_library.json"
 MINIMUM_REVIEW_COVERAGE = 0.98
@@ -723,6 +725,41 @@ class AppState:
             job = self.jobs.get(job_id)
             return dict(job) if job else None
 
+    def new_study_job(self, split: str, model_name: str, tracker: str, device: str) -> str:
+        cases = study.snapshot_cases(split)
+        model = MODEL_PATHS.get(model_name)
+        if model is None or not model.is_file():
+            raise ValueError("Prepare the selected detector weights before starting a study.")
+        if tracker not in {"bytetrack", "botsort"}:
+            raise ValueError("Choose ByteTrack or BoT-SORT.")
+        device = normalize_device(device)
+        resolve_device(device)
+        job_id = uuid.uuid4().hex[:12]
+        run_name = f"study-{datetime.now():%Y%m%d-%H%M%S}-{job_id}"
+        output = PROJECT_ROOT / "runs" / run_name
+        with self.lock:
+            self.jobs[job_id] = {"id": job_id, "kind": "study", "status": "queued",
+                                 "run_name": run_name, "completed_cases": 0, "total_cases": len(cases),
+                                 "stage": "Waiting for the processing queue", "error": None}
+
+        def worker() -> None:
+            def progress(current: int, total: int, name: str) -> None:
+                with self.lock:
+                    self.jobs[job_id].update(completed_cases=current, total_cases=total, stage=name)
+            with self.processing_lock:
+                with self.lock:
+                    self.jobs[job_id]["status"] = "running"
+                try:
+                    study.run_study(cases, output, model=model, tracker=tracker, device=device, progress=progress)
+                    with self.lock:
+                        self.jobs[job_id]["status"] = "complete"
+                except Exception as error:
+                    with self.lock:
+                        self.jobs[job_id].update(status="error", error=str(error))
+
+        threading.Thread(target=worker, daemon=True).start()
+        return job_id
+
     def new_collision_job(self, video_path: Path, start: float, end: float, device: str = "cpu") -> str:
         device = normalize_device(device)
         resolve_device(device)
@@ -1248,6 +1285,14 @@ loadCollisionExamples();syncCollisionSource();
 </script></body></html>"""
 
 
+HTML = HTML.replace("</style>", STUDY_STYLE + "\n</style>", 1)
+HTML = HTML.replace('<div class="readiness-grid" id="readinessMetrics">',
+                    STUDY_HTML + '<details class="advanced-panel"><summary>Advanced detector comparison</summary>'
+                    '<div class="readiness-grid" id="readinessMetrics">', 1)
+HTML = HTML.replace("<h3>Recent experiment history</h3>", "</details><h3>Recent experiment history</h3>", 1)
+HTML = HTML.replace("</script>", STUDY_SCRIPT + "\n</script>", 1)
+
+
 class RequestHandler(BaseHTTPRequestHandler):
     state: AppState
 
@@ -1264,6 +1309,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/api/study/"):
+            self.handle_study_get(parsed)
+            return
         if parsed.path == "/api/compute":
             self.send_json(compute_status())
             return
@@ -1526,6 +1574,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/api/study/"):
+            self.handle_study_post(parsed)
+            return
         if parsed.path == "/api/camera-profile":
             self.handle_camera_profile()
             return
@@ -1701,6 +1752,95 @@ class RequestHandler(BaseHTTPRequestHandler):
             })
         except (KeyError, ValueError, TypeError, RuntimeError, OSError, json.JSONDecodeError, binascii.Error) as exc:
             self.send_json({"error": str(exc)}, 400)
+
+    def handle_study_get(self, parsed) -> None:
+        try:
+            query = parse_qs(parsed.query)
+            if parsed.path == "/api/study/cases":
+                registry = study.read_registry()
+                cases = [{key: value for key, value in case.items() if key != "configuration"}
+                         | {"issues": study.case_issues(case)} for case in registry["cases"]]
+                runs = []
+                for path in sorted((PROJECT_ROOT / "runs").glob("study-*/report.json"), reverse=True)[:30]:
+                    try:
+                        report = json.loads(path.read_text(encoding="utf-8"))
+                        runs.append({"run_name": path.parent.name, "split": report["split"],
+                                     "model": report["model"], "case_count": len(report["cases"])})
+                    except (OSError, ValueError, KeyError):
+                        continue
+                self.send_json({"revision": registry["revision"], "cases": cases, "runs": runs})
+                return
+            if parsed.path not in {"/api/study/report", "/api/study/asset", "/api/study/source"}:
+                raise ValueError("Unknown study resource.")
+            directory = study.report_directory(query.get("run", [""])[0])
+            if not (directory / "report.json").is_file():
+                raise ValueError("The study has no completed report.")
+            if parsed.path == "/api/study/report":
+                self.send_json(json.loads((directory / "report.json").read_text(encoding="utf-8")))
+            elif parsed.path == "/api/study/asset":
+                name = query.get("name", [""])[0]
+                if name in {"report.json", "cases.csv", "errors.csv"}:
+                    path = directory / name
+                elif re.fullmatch(r"error-\d{5,}(?:(?:-crop)?\.jpg|-clip\.webm)", name):
+                    path = directory / "evidence" / name
+                else:
+                    raise ValueError("Unknown study asset.")
+                self.serve_file(path)
+            else:
+                inputs = json.loads((directory / "study_inputs.json").read_text(encoding="utf-8"))
+                case = next((c for c in inputs["cases"] if c["id"] == query.get("case", [""])[0]), None)
+                if case is None:
+                    raise ValueError("Study case not found.")
+                path = study.data_path(case["input_video"])
+                if study.file_hash(path) != case["source_sha256"]:
+                    raise ValueError("The original recording changed after this study.")
+                self.serve_file(path)
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            self.send_json({"error": str(error)}, 400)
+
+    def handle_study_post(self, parsed) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 2 * 1024 * 1024:
+                raise ValueError("Invalid study request size.")
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            if not isinstance(payload, dict):
+                raise ValueError("A study request must be a JSON object.")
+            if parsed.path == "/api/study/remove":
+                study.remove_case(str(payload["case_id"]), int(payload["revision"]))
+                self.send_json({"removed": True})
+            elif parsed.path == "/api/study/run":
+                job_id = self.state.new_study_job(str(payload["split"]), str(payload["model"]),
+                                                  str(payload["tracker"]), str(payload.get("device", "auto")))
+                self.send_json({"job_id": job_id})
+            elif parsed.path == "/api/study/cases":
+                video = study.data_path(str(payload["video_path"]))
+                _digest, identity = _annotation_identity(video)
+                draft = json.loads((ANNOTATION_DRAFT_DIR / f"{identity}.draft.json").read_text(encoding="utf-8"))
+                if not draft.get("review_complete") or not draft.get("final_ground_truth"):
+                    raise ValueError("Finalize this video's original-footage review in Ground truth first.")
+                truth = study.data_path(str(draft["final_ground_truth"]))
+                if not is_within(truth, ANNOTATION_DIR):
+                    raise ValueError("Final ground truth must be inside the annotation directory.")
+                profile = validate_camera_profile(payload["profile"])
+                first, inference = profile["lanes"][0], profile["inference"]
+                config = create_config(
+                    profile["camera_id"], first["polygon"], inference["confidence"],
+                    signal_rectangle=first.get("signal_rectangle") or None,
+                    direction=first.get("direction") or None, stop_line=first.get("stop_line") or None,
+                    restricted_polygon=first.get("restricted_polygon") or None,
+                    enabled_rules=first["enabled_rules"], image_size=inference["image_size"],
+                    restricted_initial_presence=bool(first.get("restricted_initial_presence", False)),
+                    lanes=profile["lanes"], model_name=inference["model_name"], tracker_name=inference["tracker_name"],
+                )
+                case = study.register_case(video, truth, config, name=payload["name"],
+                                           source_group=payload["source_group_id"], camera_id=payload["camera_id"],
+                                           split=payload["split"], expected_revision=int(payload["revision"]))
+                self.send_json({"case_id": case["id"]})
+            else:
+                raise ValueError("Unknown study action.")
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            self.send_json({"error": str(error)}, 400)
 
     def handle_register_finalized_ground_truth(self) -> None:
         try:

@@ -67,6 +67,19 @@ Review the original video with predictions hidden. Playback coverage must reach 
 
 See [the annotation protocol](ANNOTATION_PROTOCOL.md) and [the evaluation plan](EVALUATION_AND_COMPUTE_PLAN.md). Local development and validation records include several red-light cases. The pilot test split contained one labelled B06 event. A wider accuracy study still needs independently reviewed normal footage and previously unseen cameras.
 
+## Reviewed datasets and batch evaluation
+
+The **Study register** workspace manages reviewed video cases without editing a manifest by hand.
+
+1. Load a recording, finish its independent review in **Ground truth**, and configure the camera geometry in **Lane setup**.
+2. In **Study register**, enter a case name, source group, physical camera ID and development, validation or test use. Register the current reviewed video. A completed review with no eligible events is stored as a negative recording.
+3. Select one split, detector, tracker and compute device, then choose **Run reviewed batch**. The batch shares the existing processing queue with individual analyses and collision reviews.
+4. Inspect overall, per-recording and per-rule TP, FP, FN, Precision, Recall and F1. Open false-positive or missed-event frames, vehicle crops, short clips and the original recording at the event time. Export report JSON, case-metrics CSV and error CSV.
+
+The register rejects source or physical-camera overlap between test and development/validation, detects identical video content, and requires at least 98% original-video review coverage. It saves hashes of videos, labels and review records, and freezes each case's camera geometry. Changed inputs require registration again. A development or validation case cannot be promoted directly into test. Choose fresh test sources and fix the detector/tracker choice before testing.
+
+Completed batch reports remain available after restarting the application. The local register is stored in `data/study_registry.json`, and frozen batch inputs and reports are under `runs/study-*`. Removing a case from the register preserves its source, labels and previous results. Undefined metric denominators appear as a dash in the interface, while the underlying evaluator retains its documented zero convention.
+
 ## Command-line use
 
 Run a configured video from PowerShell:

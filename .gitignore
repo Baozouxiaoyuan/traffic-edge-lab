@@ -41,3 +41,4 @@ data/source_videos/
 data/annotations/
 data/annotation_proposals.json
 data/accuracy_campaign.active.json
+data/study_registry.json

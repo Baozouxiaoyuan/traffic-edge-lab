@@ -18,5 +18,7 @@ if defined CAPSTONE_TEST_NODE (
     if errorlevel 1 exit /b 1
     "%CAPSTONE_TEST_NODE%" "%~dp0tests\test_collision_ui.js"
     if errorlevel 1 exit /b 1
+    "%CAPSTONE_TEST_NODE%" "%~dp0tests\test_study_ui.js"
+    if errorlevel 1 exit /b 1
 )
 echo Source compilation, automated tests and the Web UI smoke test passed.
