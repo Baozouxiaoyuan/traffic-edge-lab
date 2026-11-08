@@ -6,19 +6,14 @@ regions independently of detector-box overlap; collision decisions are made sepa
 """
 from __future__ import annotations
 
-import argparse
-import hashlib
-import json
 from pathlib import Path
-import sys
 
 import cv2
 import numpy as np
 from scipy.ndimage import median_filter
 from scipy.signal import find_peaks
 
-ROOT=Path(__file__).resolve().parents[2]
-
+ROOT = Path(__file__).resolve().parents[2]
 
 def propose(path:Path,target_fps:float=5.,maximum_windows:int=4,start_seconds:float=0.,end_seconds:float|None=None)->dict:
     capture=cv2.VideoCapture(str(path))

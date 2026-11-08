@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from math import hypot
 from pathlib import Path
 from statistics import median
 import time
